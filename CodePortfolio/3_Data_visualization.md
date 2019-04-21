@@ -5,18 +5,16 @@ date: "April 20, 2019"
 output: 
   html_document: 
     keep_md: yes
-    toc: no
+    toc: yes
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+
 
 ### Table of Content:  
 - 1) Loading library ggplot2  
 - 2) Scatter plot creation  
 - 3) Scatter plot customization    
-- 4) Manual control over plots  
+- 4) Manual control over plot’s charaters  
 - 5) Line chart  
 - 6) Bar chart  
 - 7) Box Plot  
@@ -24,7 +22,7 @@ knitr::opts_chunk$set(echo = TRUE)
 - 9) Facets   
 - 10) Using global and local aesthetics   
 
-### References:
+### **References:**
 - https://r4ds.had.co.nz/data-visualisation.html  
 - SP19 Applied data science study resources  
 
@@ -36,9 +34,9 @@ ggplot(data = <DATA>) +
 
 ### 1) Loading library ggplot2  
 
-```{r}
-library(ggplot2)
 
+```r
+library(ggplot2)
 ```
 
 ### 2) Scatter plot creation
@@ -46,11 +44,13 @@ library(ggplot2)
 - Scatter plots indicate relation of one variable to other
 - `geom_point` is used for the scatter plot
 
-```{r}
+
+```r
 ggplot(data = mpg) +
   geom_point(mapping = aes(x=displ, y=cty))
-
 ```
+
+![](3_Data_visualization_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
 
 ### 3) Scatter plot customization  
 - *Adding additional parameters inside `aes` function creates rules for given parameter and ggplot will decide the appearance*
@@ -65,20 +65,30 @@ ggplot(data = mpg) +
 - In color, shape and size , if a categorical field is used then number of colors/shapes/sizes are used (for ex. distinct colors for every value of the variable). But if a continuous variable is used then these aesthetics vary gradually as per the values of the variable. For ex. Light blue to dark blue color for a variable like "cty" (mileage is city)
 
 
-```{r}
+
+```r
 ## Using various parameters in aes function
 ggplot(data = mpg) +
   geom_point(mapping = aes(x = displ, y = cty, color = class, size = cyl, shape = drv, alpha=year))
+```
 
+![](3_Data_visualization_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+
+```r
 ## Using boolean condition to decide color 
 ggplot(data=mpg) +
   geom_point(mapping = aes(x=displ, y=cty, colour = cyl <= 5))
+```
 
+![](3_Data_visualization_files/figure-html/unnamed-chunk-3-2.png)<!-- -->
+
+```r
 ## Use of stroke
 ggplot(data=mpg) +
   geom_point(mapping = aes(x=displ, y=cty, colour = drv, stroke = 3))
-
 ```
+
+![](3_Data_visualization_files/figure-html/unnamed-chunk-3-3.png)<!-- -->
 
 ### 4) Manual control over plot's charaters
 - *Adding additional parameters outside `aes` function gives manual control over those parameters*
@@ -91,32 +101,56 @@ R has 25 built in shapes that are identified by numbers. There are some seeming 
 
 Source :https://r4ds.had.co.nz/data-visualisation.html  
 
-```{r}
+
+```r
 ggplot(data = mpg) + 
   geom_point(mapping = aes(x = displ, y = hwy), color = "blue", shape = 24, fill = "red", size = 3)
-
 ```
+
+![](3_Data_visualization_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
 
 ### 5) Line chart   
 - Using `geom_smooth()` to plot line plot  
 - Plotting scatter plot and line plot  
 
-```{r}
+
+```r
 # Plotting line charts with variations on "drv" attribute of mpg dataset
 ggplot(data=mpg) +
   geom_smooth(mapping=aes(x=displ, y=cty, group=drv, linetype=drv, color=drv))
+```
 
+```
+## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+```
+
+![](3_Data_visualization_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
+```r
 # Plotting line charts and scatter plot 
 ggplot(data=mpg) +
   geom_point(mapping = aes(x=displ, y=hwy), color='red') +
   geom_smooth(mapping = aes(x=displ, y=hwy))
+```
 
+```
+## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+```
+
+![](3_Data_visualization_files/figure-html/unnamed-chunk-5-2.png)<!-- -->
+
+```r
 # Using linetype , se (confidence interval)
 ggplot(data=mpg, mapping=aes(x=displ, y= hwy )) +
   geom_point(mapping=aes(color=drv, stroke=2)) +
   geom_smooth(mapping= aes(linetype=drv),se=FALSE)
+```
 
 ```
+## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+```
+
+![](3_Data_visualization_files/figure-html/unnamed-chunk-5-3.png)<!-- -->
 
 ### 6) Bar chart
 - Using `geom_bar()` and `geom_col()`  
@@ -125,38 +159,50 @@ There are two types of bar charts: geom_bar() and geom_col(). geom_bar() makes t
 
 - Usage of ..prop.. to plot a bar chart using proportion of elements  
 
-```{r}
+
+```r
 ## Bar chart to show count of records on y axis
 
 ggplot(data=diamonds, mapping=aes(x=color)) +
   geom_bar(color = 'red') 
+```
 
+![](3_Data_visualization_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+
+```r
 ## Bar chart with a chosen attribute on y axis
 ggplot(data=diamonds, mapping=aes(x=color)) +
   geom_col(mapping=aes(y=price),color='blue', alpha=1/10)
+```
 
+![](3_Data_visualization_files/figure-html/unnamed-chunk-6-2.png)<!-- -->
+
+```r
 ## Usage of ..prop.. to plot a bar chart using proportion of elements
 ggplot(data = diamonds) + 
   geom_bar(mapping = aes(x = cut, fill = color, y = ..prop.., group=1))
-
 ```
+
+![](3_Data_visualization_files/figure-html/unnamed-chunk-6-3.png)<!-- -->
 
 ### 7) Box plot  
 - `geom_boxplot()` to plot the box plot  
 - `coord_flip()` to rotate the box plot   
-```{r}
 
+```r
 ggplot(data = mpg, mapping = aes(x = class, y = hwy)) + 
   geom_boxplot() +
   coord_flip()
-
 ```
+
+![](3_Data_visualization_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
 ### 8) stat plot  
 - `stat_summary()` plots data obtained by statistical functions such as max, min, median on attributes of the dataset  
 - `fun.ymin, fun.y, fun.ymax ` : supply three individual functions that are each passed a vector of x's and should return a single number.  
 
-```{r}
+
+```r
 ggplot(data = diamonds) + 
   stat_summary(
     mapping = aes(x = cut, y = depth),
@@ -164,40 +210,59 @@ ggplot(data = diamonds) +
     fun.ymax = max,
     fun.y = median
   )
-```  
+```
+
+![](3_Data_visualization_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
 
 ### 9) Facets :  
 - `facet_wrap()` : To facet the plot by a single variable  
 - `facet_grid()`  : To use facet with two variables  
 - Facet wrap created using facet grid : use "." to create facet using just one variable 
 
-```{r}
+
+```r
 ## To facet the plot by a single variable
 ggplot(data = mpg) +
   geom_point(mapping = aes(x=displ, y=hwy, color = class, stroke = 2)) +
   facet_wrap(~ class, nrow=1)
+```
 
+![](3_Data_visualization_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+
+```r
 ## To use facet with two variables
 ggplot(data=mpg) +
   geom_point(mapping = aes(x=displ, y=cty, colour=class)) +
   facet_grid(drv ~ cyl)
+```
 
+![](3_Data_visualization_files/figure-html/unnamed-chunk-9-2.png)<!-- -->
+
+```r
 ## Facet wrap created using facet grid : use "." to create facet using just one variable :
 ggplot(data=mpg) +
   geom_point(mapping = aes(x=displ, y=cty, colour=class)) +
   facet_grid(. ~ drv)
-
 ```
+
+![](3_Data_visualization_files/figure-html/unnamed-chunk-9-3.png)<!-- -->
 
 ### 10) Using global and local aesthetics :
 - To avoid duplication of code, we can specify aestetics at ggplot level and at individual plot level also  
 - aesthetics defeined at ggplot level is applicable to all plots, hence global  
 - aesthetics defeined at individual plot levels apply to those individual plots, hence local  
 
-```{r}
+
+```r
 ggplot(data=mpg, mapping=aes(x=displ, y= hwy )) +        ## global aestetics
   geom_point(mapping=aes(color=drv, stroke=2)) +         ## local aestetics for scatter plot
   geom_smooth(mapping= aes(linetype=drv),se=FALSE)       ## global aestetics for line chart
 ```
+
+```
+## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+```
+
+![](3_Data_visualization_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 
