@@ -1,1 +1,27 @@
 This repository contains code portfolio for I590.
+
+1) PynbFiles : Contains .ipynb files 
+   List of files :
+1.Data_Import.ipynb
+2_Data_Wrangling.ipynb
+3a_Data_visualization_seaborn.ipynb
+3b_Data_visualization_matplotlib.ipynb
+4_Data_analysis.ipynb
+
+2) RFiles    : contains .rmd, .md. .html files. .md files are included so that the visualizations are visible in GitHub
+   List of files :
+1_Data_import.Rmd
+2_Data_wrangling.Rmd
+3_Data_visualization.Rmd
+4_Data_analysis.Rmd
+
+   Additional files to show visualizations :	
+3_Data_visualization_files
+3_Data_visualization.html
+3_Data_visualization.md
+
+4_Data_analysis.html
+4_Data_analysis.md
+4_Data_analysis_files
+
+
