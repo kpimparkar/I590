@@ -1,0 +1,95 @@
+---
+title: "Data Import in R"
+author: "Ketan Pimparkar"
+date: "April 19, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+*References : *  
+1) SP19-Applied DS course material and assignments  
+2) https://www.datacamp.com/community/tutorials/r-data-import-tutorial  
+
+**Table of content**  
+- 1) Setting up the workspace  
+- 2) Reading .csv and loading the data in a data frame  
+- 3) Reading a delimited file  
+- 4) Reading an excel  
+- 5) Reading a JSON file  
+
+### 1) Setting up the workspace
+- Using getwd() and setwd() 
+- Declaring input file names
+
+```{r warning=FALSE}
+## setwd() generates a warning indicating setwd is effective only for this code chunk. Added warnings=FALSE to suppress this warning
+
+curr_dir <- getwd()
+setwd("C:/Study/IUMSDS/Spring2019/Applied DS/data")
+print(paste("Current directory is : ", getwd()))
+ip_csv <- 'income.csv'
+ip_delim <- 'income.txt'
+
+```
+### 2) Reading .csv and loading the data in a data frame
+- read.csv() : separator is ","
+- read.csv2(): separator is ";"
+
+```{r warning=FALSE}
+setwd("C:/Study/IUMSDS/Spring2019/Applied DS/data")
+df <- read.csv(ip_csv)
+#print(head(df))
+print(paste("Input .csv is loaded in data frame df which has dimensions as : ", nrow(df), " X ", ncol(df)))
+
+```
+
+### 3) Reading a delimited file
+- Using read.table() : header is FALSE by default. and separator is space by default.
+- read.delim() : header is TRUE by default. and separator is tab by default.
+- read.delim2(): header is TRUE by default. and separator is tab by default.
+- read.delim functions have fill=TRUE by default, this means space will be added to rows of unequal lengths.
+
+```{r warning=FALSE}
+setwd("C:/Study/IUMSDS/Spring2019/Applied DS/data")
+df <- read.table(ip_delim, sep='|', header=TRUE)
+
+print(paste("Input .csv is loaded in data frame df which has dimensions as : ", nrow(df), " X ", ncol(df)))
+
+df2 <- read.delim(ip_delim, sep='|')
+print(paste("Input .csv is loaded in data frame df which has dimensions as : ", nrow(df2), " X ", ncol(df2)))
+
+
+```
+### 4) Reading an excel
+- Using readxl library
+
+```{r warning=FALSE}
+library('readxl')
+
+setwd("C:/Study/IUMSDS/Spring2019/Applied DS/data")
+
+df <- read_excel('Farmers_market.xlsx', sheet = 'Sheet2')
+print(paste("Input .csv is loaded in data frame df which has dimensions as : ", nrow(df), " X ", ncol(df)))
+
+```
+### 5) Reading a JSON file
+- Using rjson library
+
+```{r warning=FALSE}
+##install.packages('rjson')
+library('rjson')
+
+setwd("C:/Study/IUMSDS/Spring2019/Applied DS/data")
+
+json_data <- fromJSON(file = 'Alphavantage_Json.txt')
+
+#print(class(json_data))
+
+print(paste("Input json is read in the form of a list which has length as : ", length(json_data)))
+
+
+```

@@ -1,0 +1,167 @@
+---
+title: "Data Wrangling in R"
+author: "Ketan Pimparkar"
+date: "April 20, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### References:
+- SP19 Applied Data Science study material
+- Data camp course on R
+
+### Loading r libraries
+- tidyverse to load packages such as ggplo2, dplyr, readr, tidyr
+- dplyr to manipulate the data 
+
+```{r}
+library(tidyverse)
+library(dplyr)
+
+## Loading gapminder package and accessing the gapminder dataframe
+library(gapminder)
+
+```
+
+### Basic verification of the data
+- Used mpg data to perform basic tasks such as 
+  - checking dimesions of the data
+  - checking structure
+  - max - min
+  - unique values
+  - count of values
+  
+```{r}
+print(paste("Number of rows in mpg dataset : ", nrow(mpg)))
+print(paste("Number of rows in mpg dataset : ", ncol(mpg)))
+
+## Checking structure of the dataset
+str(mpg)
+
+## checking first 5 rows of the dataset
+#head(mpg)
+
+## checking unique values of attribute "model" of mpg dataset
+unique(mpg$model)
+
+## checking max value of attribute "city" of mpg dataset
+max(mpg$cty)
+
+## checking min value of attribute "city" of mpg dataset
+min(mpg$cty)
+
+## Finding count of rows satidfying a condition
+count(filter(mpg, mpg$class == 'suv'))
+nrow(filter(mpg, mpg$class == 'suv'))
+```
+
+### Verbs from dplyr package
+- filter
+- arrange
+- mutate
+
+```{r}
+## verb : FILTER
+## 1) filtering with single condition
+## Create a DF with country as "India" from gapminder dataset
+
+gapminder_india <- gapminder %>% filter(country == 'India')
+dim(gapminder_india)  ## checking dimensions of result DF
+
+## 2) with 2 conditions: "," worked as "and"
+## Create a DF with country as "India" and year > 2000 from gapminder dataset
+
+gapminder_india_gt2000 <- gapminder %>% filter(country == 'India' , year > 2000)
+dim(gapminder_india_gt2000)
+
+## 3) OR
+## Create a DF with country as "India" or country as "Nepal" from gapminder dataset
+
+gapminder_India_Nepal <- gapminder %>% filter(country == 'India' | country == 'Nepal')
+dim(gapminder_India_Nepal)
+
+
+## Verb : ARRANGE - This is to sort the date of a data frame
+## 1) Arrange sorts the data in ascending order by default
+
+#gapminder %>% arrange(country)
+gap_sorted <- gapminder %>% arrange(desc(country))  ## sorting in descending order of the country
+
+## 2) using multiple verbs
+## selecting rows with country as "India" and sorting it on descending order of year
+
+gap_india_sorted <- gapminder %>%
+  filter(country == 'India') %>%
+  arrange(desc(year))
+
+
+## Verb : MUTATE - to modify value of a column
+# mutate creates a new DF with additional column totalGDP
+
+gap_new <- gapminder %>%
+  mutate(totalGDP = pop * gdpPercap) 
+
+## Using multiple verbs :
+gap_new_sorted <- gapminder %>%
+  mutate(totalGDP = pop * gdpPercap) %>%
+  filter(year == 2007) %>%
+  arrange(totalGDP)
+```
+
+### Additional functions on dataframe 
+
+- Reading a RDS data and loading it in a DF
+- selecting range of columns
+- skipping range of columns
+- get index of a column
+- renaming columns
+- transmute() function
+- Extracting year from the date field and adding it the original DF
+- summarizing the data frame using custom functions
+
+```{r}
+## setting the working directory
+getwd()
+setwd("C:/Study/IUMSDS/Spring2019/Applied DS")
+
+## Reading a RDS data and loading it in a DF
+chicago <- readRDS("data/chicago.rds")
+
+## Checking structure of new DF
+#str(chicago)
+#head(chicago)
+
+names(chicago) #returns column names
+
+#selecting range of columns
+head(select(chicago, city:dptp)) 
+#### OR ####
+chicago %>% select(city:dptp) %>% head()
+
+#skipping range of columns
+head(select(chicago, -(city:dptp))) 
+
+## to get index of a column
+match("dptp", names(chicago)) 
+
+## renaming columns
+head(rename(chicago, duepoint=dptp, pm25=pm25tmean2)) 
+
+#There is also the related transmute() function, which does the same thing as mutate() but then drops all non-transformed variables.
+new_df <- transmute(chicago,pm10detrend = pm10tmean2 - mean(pm10tmean2, na.rm = TRUE))
+print(dim(new_df))
+
+#Extracting year from the date field and adding it the original DF
+chicago <- mutate(chicago, year = as.POSIXlt(date)$year + 1900)
+
+#head(chicago)
+
+#summarizing the data frame using custom functions
+summarize(group_by(chicago,year), pm25 = mean(pm25tmean2, na.rm = TRUE), 
+          o3 = max(o3tmean2, na.rm = TRUE), 
+          no2 = median(no2tmean2, na.rm = TRUE))
+```
+
