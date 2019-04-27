@@ -1,0 +1,81 @@
+---
+title: "SP19_Applied_DS_Final_Project"
+author: "Ketan Pimparkar"
+date: "April 26, 2019"
+output: 
+  html_document: 
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## IMPORTING REQUIRED R LIBRARIES
+- ggplot2 : For data visualization
+- dplyr   : For data wrangling
+
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+```
+
+## IMPORTING THE DATASET FROM .csv FILE
+- Importing the .csv file useg read.csv 
+- creating a data frame with the data from the read .csv
+
+```{r warning=FALSE}
+## setwd() generates a warning indicating setwd is effective only for this code chunk. Added warnings=FALSE to suppress this warning
+
+currDir <- getwd()
+setwd("C:/Study/IUMSDS/Spring2019/Applied DS/data")
+
+df <- read.csv('gapminder.csv')
+
+```
+## DESCRIBING THE DATASET
+
+```{r}
+# line1 holds the dimension of the data frame.
+line1 <- paste("The data set contains ",nrow(df), "observations, each observation with", ncol(df), "attributes(variables)")
+
+#Function to return count of unique values 
+getCountD <- function(x){
+   length(unique(x))
+}
+
+#Loop to access all attributes of the data set and store data type, number of unique values in a string 'lineD'
+lineD <- " "
+for (col in names(df)){
+  lineD <- paste(lineD ,'\n',"- Attribute",col,"is of data type",sapply(df,class)[match(col, names(df))],"and has",sapply(df,getCountD)[match(col, names(df))],"unique values.")
+}
+
+## line1 and lineD are then printed using inline R code as below :
+```
+
+- `r line1`
+
+`r lineD`
+
+```{r echo=FALSE}
+print(paste("1. The data set contains ",nrow(df), "observations, each observation with", ncol(df), "attributes(variables)"))
+#str(df)
+#class(df$Country)
+
+#class(names(df))
+#length(names(df))
+#for (col in names(df)){
+#  strx <- paste("- Attribute", col, "is of data type ", class(df$col))
+#  print(class(df[col]))
+#  print(class(df$"col")[1])
+#  print(length(unique(df$col)))
+#  break
+#}
+
+#length(class(df$region))
+#sapply(df, class)
+#xyz <- sapply(df, abc)
+
+```
