@@ -196,6 +196,8 @@ $(document).ready(function () {
 <li><a href="#importing-required-r-libraries">IMPORTING REQUIRED R LIBRARIES</a></li>
 <li><a href="#importing-the-dataset-from-.csv-file">IMPORTING THE DATASET FROM .csv FILE</a></li>
 <li><a href="#describing-the-dataset">DESCRIBING THE DATASET</a></li>
+<li><a href="#checking-null-values">CHECKING NULL VALUES</a></li>
+<li><a href="#data-wrangling">DATA WRANGLING</a></li>
 </ul>
 </div>
 
@@ -239,23 +241,143 @@ getCountD &lt;- function(x){
    length(unique(x))
 }
 
+
 #Loop to access all attributes of the data set and store data type, number of unique values in a string 'lineD'
+
 lineD &lt;- &quot; &quot;
 for (col in names(df)){
-  lineD &lt;- paste(lineD ,'\n',&quot;- Attribute&quot;,col,&quot;is of data type&quot;,sapply(df,class)[match(col, names(df))],&quot;and has&quot;,sapply(df,getCountD)[match(col, names(df))],&quot;unique values.&quot;)
+  dtype &lt;- sapply(df,class)[match(col, names(df))]
+  lineD &lt;- paste(lineD ,'\n',&quot;- Attribute&quot;,col,&quot;is of data type&quot;,dtype,&quot;and has&quot;,sapply(df,getCountD)[match(col, names(df))],&quot;unique values.&quot;)
+
+#Added below code to show how dispersed an integer attribute is in this dataset
+  if (dtype == &quot;integer&quot;){
+      lineD &lt;- paste(lineD, &quot;\n&quot;,&quot;\t&quot;,&quot;- The range of&quot;,col,&quot;is from&quot;, min(df[[col]], na.rm=TRUE),&quot;to&quot;,max(df[[col]], na.rm=TRUE))
+  }
+}</code></pre>
+<!--
+
+
+```r
+getDetail <- function(in_df){
+  
+    # line1 holds the dimension of the data frame.
+    line1 <- paste("The data set contains ",nrow(df), "observations, each observation with", ncol(df), "attributes(variables)")
+    
+    #Function to return count of unique values 
+    getCountD <- function(x){
+       length(unique(x))
 }
 
-## line1 and lineD are then printed using inline R code as below :</code></pre>
+    #Loop to access all attributes of the data set and store data type, number of unique values in a string 'lineD'
+
+    lineD <- " "
+    for (col in names(in_df)){
+      dtype <- sapply(in_df,class)[match(col, names(in_df))]
+      lineD <- paste(lineD ,'\n',"- Attribute",col,"is of data type",dtype,"and has",sapply(in_df,getCountD)[match(col, names(in_df))],"unique values.")
+    
+    #Added below code to show how dispersed an integer attribute is in this dataset
+      if (dtype == "integer"){
+          lineD <- paste(lineD, "\n","\t","- The range of",col,"is from", min(in_df[[col]], na.rm=TRUE),"to",max(in_df[[col]], na.rm=TRUE))
+      }
+    }
+    
+}
+
+getDetail(df)
+
+## line1 and lineD are then printed using inline R code as below :
+```
+-->
 <ul>
 <li><p>The data set contains 41284 observations, each observation with 6 attributes(variables)</p></li>
 <li>Attribute Country is of data type factor and has 197 unique values.</li>
-<li>Attribute Year is of data type integer and has 216 unique values.</li>
+<li>Attribute Year is of data type integer and has 216 unique values.
+<ul>
+<li>The range of Year is from 1800 to 2015</li>
+</ul></li>
 <li>Attribute life is of data type numeric and has 14181 unique values.</li>
 <li>Attribute population is of data type factor and has 15260 unique values.</li>
-<li>Attribute income is of data type integer and has 10450 unique values.</li>
+<li>Attribute income is of data type integer and has 10450 unique values.
+<ul>
+<li>The range of income is from 142 to 182668</li>
+</ul></li>
 <li><p>Attribute region is of data type factor and has 6 unique values.</p></li>
 </ul>
-<pre><code>## [1] &quot;1. The data set contains  41284 observations, each observation with 6 attributes(variables)&quot;</code></pre>
+</div>
+<div id="checking-null-values" class="section level2">
+<h2>CHECKING NULL VALUES</h2>
+<pre class="r"><code>#Following for loop indicates that there are 2341 null values in 'income' column of the dataset
+
+for (col in (names(df))){
+  print(paste(col, &quot;nulls:&quot;,sum(is.na(df[[col]]))))
+}</code></pre>
+<pre><code>## [1] &quot;Country nulls: 0&quot;
+## [1] &quot;Year nulls: 0&quot;
+## [1] &quot;life nulls: 0&quot;
+## [1] &quot;population nulls: 0&quot;
+## [1] &quot;income nulls: 2341&quot;
+## [1] &quot;region nulls: 0&quot;</code></pre>
+<div id="section" class="section level37">
+<p></p>
+</div>
+</div>
+<div id="data-wrangling" class="section level2">
+<h2>DATA WRANGLING</h2>
+<ul>
+<li>convert population to integer</li>
+<li>select only years where population is &gt; 0</li>
+</ul>
+<pre class="r"><code>#Selecting only those years where population value is available.
+
+df_pop &lt;- filter(df, df$Year%%10 == 0)
+
+#Converting population column from factor to an integer column
+#Removing commas from population column
+
+df_pop$poulation &lt;- as.integer(gsub(&quot;,&quot;,&quot;&quot;,as.character(df_pop$population)))
+
+
+
+# line1 holds the dimension of the data frame.
+line1 &lt;- paste(&quot;The data set contains &quot;,nrow(df_pop), &quot;observations, each observation with&quot;, ncol(df_pop), &quot;attributes(variables)&quot;)
+
+#Function to return count of unique values 
+getCountD &lt;- function(x){
+   length(unique(x))
+}
+
+
+#Loop to access all attributes of the data set and store data type, number of unique values in a string 'lineD'
+
+lineD &lt;- &quot; &quot;
+for (col in names(df_pop)){
+  dtype &lt;- sapply(df_pop, class)[match(col, names(df_pop))]
+  lineD &lt;- paste(lineD ,'\n',&quot;- Attribute&quot;,col,&quot;is of data type&quot;,dtype,&quot;and has&quot;,sapply(df_pop, getCountD)[match(col, names(df_pop))],&quot;unique values.&quot;)
+
+#Added below code to show how dispersed an integer attribute is in this dataset
+  if (dtype == &quot;integer&quot;){
+      lineD &lt;- paste(lineD, &quot;\n&quot;,&quot;\t&quot;,&quot;- The range of&quot;,col,&quot;is from&quot;, min(df_pop[[col]], na.rm=TRUE),&quot;to&quot;,max(df_pop[[col]], na.rm=TRUE))
+  }
+}</code></pre>
+<p>For the new data The data set contains 4208 observations, each observation with 7 attributes(variables)</p>
+<ul>
+<li>Attribute Country is of data type factor and has 196 unique values.</li>
+<li>Attribute Year is of data type integer and has 22 unique values.
+<ul>
+<li>The range of Year is from 1800 to 2010</li>
+</ul></li>
+<li>Attribute life is of data type numeric and has 1708 unique values.</li>
+<li>Attribute population is of data type factor and has 3990 unique values.</li>
+<li>Attribute income is of data type integer and has 2594 unique values.
+<ul>
+<li>The range of income is from 350 to 182668</li>
+</ul></li>
+<li>Attribute region is of data type factor and has 6 unique values.</li>
+<li>Attribute poulation is of data type integer and has 3981 unique values.
+<ul>
+<li>The range of poulation is from 2128 to 1340968737</li>
+</ul></li>
+</ul>
 </div>
 
 

@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 - dplyr   : For data wrangling
 
 
-```{r}
+```{r warning=FALSE}
 library(ggplot2)
 library(dplyr)
 
@@ -46,36 +46,115 @@ getCountD <- function(x){
    length(unique(x))
 }
 
+
 #Loop to access all attributes of the data set and store data type, number of unique values in a string 'lineD'
+
 lineD <- " "
 for (col in names(df)){
-  lineD <- paste(lineD ,'\n',"- Attribute",col,"is of data type",sapply(df,class)[match(col, names(df))],"and has",sapply(df,getCountD)[match(col, names(df))],"unique values.")
+  dtype <- sapply(df,class)[match(col, names(df))]
+  lineD <- paste(lineD ,'\n',"- Attribute",col,"is of data type",dtype,"and has",sapply(df,getCountD)[match(col, names(df))],"unique values.")
+
+#Added below code to show how dispersed an integer attribute is in this dataset
+  if (dtype == "integer"){
+      lineD <- paste(lineD, "\n","\t","- The range of",col,"is from", min(df[[col]], na.rm=TRUE),"to",max(df[[col]], na.rm=TRUE))
+  }
 }
+
+
+```
+<!--
+
+```{r}
+getDetail <- function(in_df){
+  
+    # line1 holds the dimension of the data frame.
+    line1 <- paste("The data set contains ",nrow(df), "observations, each observation with", ncol(df), "attributes(variables)")
+    
+    #Function to return count of unique values 
+    getCountD <- function(x){
+       length(unique(x))
+}
+
+    #Loop to access all attributes of the data set and store data type, number of unique values in a string 'lineD'
+
+    lineD <- " "
+    for (col in names(in_df)){
+      dtype <- sapply(in_df,class)[match(col, names(in_df))]
+      lineD <- paste(lineD ,'\n',"- Attribute",col,"is of data type",dtype,"and has",sapply(in_df,getCountD)[match(col, names(in_df))],"unique values.")
+    
+    #Added below code to show how dispersed an integer attribute is in this dataset
+      if (dtype == "integer"){
+          lineD <- paste(lineD, "\n","\t","- The range of",col,"is from", min(in_df[[col]], na.rm=TRUE),"to",max(in_df[[col]], na.rm=TRUE))
+      }
+    }
+    
+}
+
+getDetail(df)
 
 ## line1 and lineD are then printed using inline R code as below :
 ```
-
+-->
 - `r line1`
 
 `r lineD`
 
-```{r echo=FALSE}
-print(paste("1. The data set contains ",nrow(df), "observations, each observation with", ncol(df), "attributes(variables)"))
-#str(df)
-#class(df$Country)
+## CHECKING NULL VALUES
 
-#class(names(df))
-#length(names(df))
-#for (col in names(df)){
-#  strx <- paste("- Attribute", col, "is of data type ", class(df$col))
-#  print(class(df[col]))
-#  print(class(df$"col")[1])
-#  print(length(unique(df$col)))
-#  break
-#}
+```{r}
+#Following for loop indicates that there are 2341 null values in 'income' column of the dataset
 
-#length(class(df$region))
-#sapply(df, class)
-#xyz <- sapply(df, abc)
+for (col in (names(df))){
+  print(paste(col, "nulls:",sum(is.na(df[[col]]))))
+}
 
 ```
+
+
+#####################################  
+
+
+## DATA WRANGLING
+
+- convert population to integer
+- select only years where population is > 0
+
+
+```{r}
+#Selecting only those years where population value is available.
+
+df_pop <- filter(df, df$Year%%10 == 0)
+
+#Converting population column from factor to an integer column
+#Removing commas from population column
+
+df_pop$poulation <- as.integer(gsub(",","",as.character(df_pop$population)))
+
+
+
+# line1 holds the dimension of the data frame.
+line1 <- paste("The data set contains ",nrow(df_pop), "observations, each observation with", ncol(df_pop), "attributes(variables)")
+
+#Function to return count of unique values 
+getCountD <- function(x){
+   length(unique(x))
+}
+
+
+#Loop to access all attributes of the data set and store data type, number of unique values in a string 'lineD'
+
+lineD <- " "
+for (col in names(df_pop)){
+  dtype <- sapply(df_pop, class)[match(col, names(df_pop))]
+  lineD <- paste(lineD ,'\n',"- Attribute",col,"is of data type",dtype,"and has",sapply(df_pop, getCountD)[match(col, names(df_pop))],"unique values.")
+
+#Added below code to show how dispersed an integer attribute is in this dataset
+  if (dtype == "integer"){
+      lineD <- paste(lineD, "\n","\t","- The range of",col,"is from", min(df_pop[[col]], na.rm=TRUE),"to",max(df_pop[[col]], na.rm=TRUE))
+  }
+}
+
+```
+For the new data
+`r line1`
+`r lineD`
