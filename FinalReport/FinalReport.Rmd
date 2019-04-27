@@ -14,12 +14,13 @@ knitr::opts_chunk$set(echo = TRUE)
 ## IMPORTING REQUIRED R LIBRARIES
 - ggplot2 : For data visualization
 - dplyr   : For data wrangling
+- corrplot: For correlation plots
 
 
 ```{r warning=FALSE}
 library(ggplot2)
 library(dplyr)
-
+library(corrplot)
 ```
 
 ## IMPORTING THE DATASET FROM .csv FILE
@@ -128,10 +129,10 @@ df_pop <- filter(df, df$Year%%10 == 0)
 #Converting population column from factor to an integer column
 #Removing commas from population column
 
-df_pop$poulation <- as.integer(gsub(",","",as.character(df_pop$population)))
+df_pop$poulation1 <- as.integer(gsub(",","",as.character(df_pop$population)))
 
-
-
+```
+```{r echo=FALSE}
 # line1 holds the dimension of the data frame.
 line1 <- paste("The data set contains ",nrow(df_pop), "observations, each observation with", ncol(df_pop), "attributes(variables)")
 
@@ -155,6 +156,129 @@ for (col in names(df_pop)){
 }
 
 ```
-For the new data
+For the new data : 
 `r line1`
 `r lineD`
+
+```{r}
+## Creating a data frame with details of 'India'
+df_india <- filter(df, df$Country=='India')
+
+## Calculating a column population1 by removing "," from column population
+df_india$population1 <- as.integer(gsub(",","",as.character(df_india$population)))
+
+## Definig a function which returns applicable population for given year.
+## e.g. for year 1905 it will return population of year 1900
+#x is year
+getPop <- function(x){
+  if (x%%10 == 0){
+    as.integer(filter(df_india, df_india$Year==x)['population1'])
+  }
+  else {
+    as.integer(filter(df_india, df_india$Year==(x - x%%10))['population1'])
+  }
+}
+
+## Creating a dataframe with additional column 'calc_pop' which holds the applicable population for that year
+df_india_new <- df_india %>%
+  mutate(calc_pop = sapply(df_india$Year,getPop))
+
+```
+
+## EXPLORATORY DATA ANALYSIS
+
+```{r}
+## CHECKING MEDIAN LIFE EXPECTANCY FOR EACH REGION
+print("MEDIAN LIFE EXPECTANCY FOR EACH REGION : ")
+aggregate(life ~ region, df, median)
+
+## CHECKING MEAN LIFE EXPECTANCY FOR EACH REGION
+print("MEAN LIFE EXPECTANCY FOR EACH REGION : ")
+aggregate(life ~ region, df, mean)
+
+max(df$Year)
+
+df_2015 <- filter(df, df$Year==2015)
+
+incomeRegion <- df_2015 %>% 
+  group_by(region) %>% 
+  summarize(avgIncome = mean(income))
+
+
+# plotting avg income for each region for year 2015
+
+ggplot(incomeRegion, 
+  aes(x = region, y = avgIncome, color = region)) +
+  geom_point(size=4) +
+  ggtitle("2015 Average Income by Region") +
+  xlab("Region") + ylab("Avg. Income") +
+  theme(axis.text.x=element_text(angle=10))
+
+```
+
+
+```{r}
+RegionTrend <- df %>% 
+  group_by(Year, region) %>% 
+  summarize(avgIncome = mean(income, na.rm=TRUE), avgLife = mean(life,na.rm = TRUE))
+
+ggplot(RegionTrend, 
+  aes(x = Year, y = avgIncome, color = region)) +
+  geom_smooth(se=FALSE) +
+  ggtitle("Time trend of Average Income by Region") +
+  xlab("Year") + ylab("Avg. Income") 
+
+ggplot(RegionTrend, 
+  aes(x = Year, y = avgLife, color = region)) +
+  geom_smooth(se=FALSE) +
+  ggtitle("Time trend of Average Life expectancy by Region") +
+  xlab("Year") + ylab("Avg. Life expectancy")  
+
+```
+
+```{r}
+ggplot(df_2015, aes(x = region, y = life)) +
+  geom_boxplot(outlier.colour = "hotpink") +
+  geom_jitter(position = position_jitter(width = 0.1, height = 0), alpha = 1/4) +
+  ggtitle("Box plot of life expectancy by Region for year 2015") +
+  ylab("Life expectancy") + xlab("Region")  +
+  coord_flip() 
+  
+```
+
+
+- TO SHOW THAT, OVER THE PERIOD DEPENDENCY OF LIFE EXPECTANCY ON INCOME HAS REDUCED
+
+```{r}
+#library(gridExtra)
+
+## TO SHOW THAT, OVER THE PERIOD DEPENDENCY OF LIFE EXPECTANCY ON INCOME HAS REDUCED
+df_1900 <- filter(df, df$Year==1900)
+
+#par( mfrow = c(2,2) )
+
+#p1 <- 
+ggplot(data=df_1900) +
+  geom_point(mapping = aes(x=income, y=life, color=region, alpha=0.4)) +
+  ggtitle("High dependency of life expectancy on income for year 1900") +
+  ylab("Life expectancy") + xlab("Income")  
+  #theme(legend.position="bottom")
+
+#p2 <- 
+ggplot(data=df_2015) +
+  geom_point(mapping = aes(x=income, y=life, color=region, alpha=0.4)) +
+  ggtitle("Low dependency of life expectancy on income for year 2015") +
+  ylab("Life expectancy") + xlab("Income")  
+  #theme(legend.position="bottom")
+
+#grid.arrange(p1,p2,ncol=2)
+
+```
+
+```{r}
+
+corrplot(cor(df_india_new[c('Year','life','income','calc_pop')]),addCoef.col="grey")
+
+df_india_new[c('Year','life','income','calc_pop')]
+
+```
