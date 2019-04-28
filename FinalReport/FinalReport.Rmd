@@ -1,9 +1,10 @@
 ---
-title: "SP19_Applied_DS_Final_Project"
+title: "SP19 : APPLIED DATA SCIENCE - Final Report"
 author: "Ketan Pimparkar"
 date: "April 26, 2019"
 output: 
   html_document: 
+    fig_caption: yes
     toc: yes
 ---
 
@@ -19,7 +20,7 @@ knitr::opts_chunk$set(echo = TRUE)
 - cluster : clustering algorithms
 - factoextra : clustering algorithms & visualization
 - tidyverse  : Data manipulation
-
+- lmtest  : To test the validity of linearity
 
 ```{r warning=FALSE}
 library(ggplot2)
@@ -29,6 +30,7 @@ library(zoo)
 library(cluster)
 library(factoextra)
 library(tidyverse)
+library(lmtest)
 ```
 
 ## IMPORTING THE DATASET FROM .csv FILE
@@ -92,8 +94,8 @@ for (col in (names(df))){
 
 - Convert population to integer
   - population column has numbers in 999,999,999 format. This step converts all population values to integers
-- Fetching values for intermediate years
-  - The data set has population only last year of the decade. 
+- Fetching values of population for intermediate years
+  - The data set has population only for last year of the decade. Used `na.locf()` to populate these missing values same as the last available non - NA value.
 
 
 ```{r}
@@ -111,7 +113,7 @@ df$income <- na.locf(df$income)
 
 ```{r echo=FALSE}
 ############ NOTE ########
-# Befor eusing na.locf(), I wrote following function. This function works correctly on smaller dataframes but it generated wrong population for the whole dataset. Could not find out the reason, finally used na.locf() instead.
+# Before using na.locf(), I wrote following function. This function works correctly on smaller dataframes but it generated incorrect 'population' when ran on the whole dataset. Could not find out the reason, finally used na.locf() instead.
 
 #df$pop1 <- as.integer(gsub(",","",as.character(df$population)))
 #getPop <- function(country,year){
@@ -128,13 +130,14 @@ df$income <- na.locf(df$income)
 
 ######### OUTPUT ##########
 
-#Country Year life population income region pop1 pop_new
-#<fctr>  <int>  <dbl>  <fctr>  <int>  <fctr>  <int>  <list>
-#Afghanistan	1800	28.211000	3280000	603	South Asia	3280000	<int [1]>
-#Afghanistan	1801	28.200753		603	South Asia	NA	<int [1]>
+#Country Year life population income region pop1 "pop_new"
+#<fctr>  <int>  <dbl>  <fctr>  <int>  <fctr>  <int>  "<list>"
+#Afghanistan	1800	28.211000	3280000	603	South Asia	3280000	"<int [1]>"
+#Afghanistan	1801	28.200753		603	South Asia	NA	"<int [1]>"
 ```
 
 ```{r echo=FALSE}
+##Summarizing the data again.
 # line1 holds the dimension of the data frame.
 line1 <- paste("The data set contains ",nrow(df), "observations, each observation with", ncol(df), "attributes(variables)")
 
@@ -164,17 +167,42 @@ For the new data :
 
 ## EXPLORATORY DATA ANALYSIS
 
+### QUESTIONS TO BE ANSWERED
+  - Q1 : What is the median life expectancy in provided regions? 
+  - Q2 : What is the mean life expectancy in provided regions? 
+  - Q3 : In the latest year (2015), what is the average income per regions ?
+  - Q4 : How did Average Life expectancy by Region change over the period ?
+  - Q5 : How did Average Income by Region change over the period ?
+  - Q6 : In latest year (2015), how was the distribution of life expectancy in all regions?
+  - Q7 : Did the dependency of life expectancy on income changed over the period ?
+  - Q8 : How are all attributes corelated to one another for the complete dataset and for a particular country ?
+  - Q9 : How many clusters are present in the data?
+  - Q10: Is there linear relationship of life expectancy with income, year, population ?
+
+### VISUALIZATIONS
+
+**Q1 : What is the median life expectancy in provided regions? Which one has the highest ?**  
+- ANS : Median life expectancy is as below. Europe & Central Asia has the highest Median life expectancy.
+
 ```{r}
 ## CHECKING MEDIAN LIFE EXPECTANCY FOR EACH REGION
 print("MEDIAN LIFE EXPECTANCY FOR EACH REGION : ")
 aggregate(life ~ region, df, median)
+```
 
+**Q2 : What is the mean life expectancy in provided regions? Which one has the highest ?**  
+- - ANS : Mean life expectancy is as below. Europe & Central Asia has the highest Mean life expectancy.
+
+```{r}
 ## CHECKING MEAN LIFE EXPECTANCY FOR EACH REGION
 print("MEAN LIFE EXPECTANCY FOR EACH REGION : ")
 aggregate(life ~ region, df, mean)
+```
 
-max(df$Year)
+**Q3 : In the latest year (2015), what is the average income per regions ?**
+- ANS : The scatter plot shows that  Middle east and north africa region has the highest average income value. 
 
+```{r}
 df_2015 <- filter(df, df$Year==2015)
 
 incomeRegion <- df_2015 %>% 
@@ -192,18 +220,14 @@ ggplot(incomeRegion,
   theme(axis.text.x=element_text(angle=10))
 
 ```
-
+ 
+**Q4 : How did Average Life expectancy by Region change over the period ?**  
+- ANS : The line chart indicates that Average Life expectancy increased over the years. Middle east and North africa region is the highest gainer in this category.
 
 ```{r}
 RegionTrend <- df %>% 
   group_by(Year, region) %>% 
   summarize(avgIncome = mean(income, na.rm=TRUE), avgLife = mean(life,na.rm = TRUE))
-
-ggplot(RegionTrend, 
-  aes(x = Year, y = avgIncome, color = region)) +
-  geom_smooth(se=FALSE) +
-  ggtitle("Time trend of Average Income by Region") +
-  xlab("Year") + ylab("Avg. Income") 
 
 ggplot(RegionTrend, 
   aes(x = Year, y = avgLife, color = region)) +
@@ -212,6 +236,20 @@ ggplot(RegionTrend,
   xlab("Year") + ylab("Avg. Life expectancy")  
 
 ```
+
+**Q5 : How did Average Income by Region change over the period ?**  
+- ANS : The line chart indicates that Average Income increased over the years. Middle east and North africa region is the highest gainer in this category.
+
+```{r}
+ggplot(RegionTrend, 
+  aes(x = Year, y = avgIncome, color = region)) +
+  geom_smooth(se=FALSE) +
+  ggtitle("Time trend of Average Income by Region") +
+  xlab("Year") + ylab("Avg. Income") 
+```
+
+**Q6 : In latest year (2015), how was the distribution of life expectancy in all regions?**  
+- ANS : The box plot shows that Europe and central asia leads in the life expectancy category, whereas Sub-saharan Africa has the least life expectancy.
 
 ```{r}
 ggplot(df_2015, aes(x = region, y = life)) +
@@ -223,8 +261,8 @@ ggplot(df_2015, aes(x = region, y = life)) +
   
 ```
 
-
-- TO SHOW THAT, OVER THE PERIOD DEPENDENCY OF LIFE EXPECTANCY ON INCOME HAS REDUCED
+**Q7 : Did the dependency of life expectancy on income changed over the period ?**  
+- ANS : Plot shows that over the period, dependency of life expectancy on income has reduced significantly. It also shos that life expectancy has improved over years. Two visualize this change, two scatter plots of life expectancy vs income are prepared. One for the year 1900 and another for year 2015. This highlights old to new trend.
 
 ```{r}
 #library(gridExtra)
@@ -252,6 +290,12 @@ ggplot(data=df_2015) +
 
 ```
 
+**Q8 : How are all attributes corelated to one another for the complete dataset and for a particular country ?**  
+- ANS : Please refer correlation plots :  
+
+- Correlation coefficients change significantly for India as compared to the overall Correlation coefficients.   
+- This indicates that the behavior changes for countries as compared to the overall trend.  
+
 ```{r}
 
 corrplot(cor(df[c('Year','life','income','pop1')]),addCoef.col="grey", title="Correlation plot of all numeric attributes of the dataset for all counties")
@@ -259,15 +303,16 @@ corrplot(cor(df[c('Year','life','income','pop1')]),addCoef.col="grey", title="Co
 df_india <- filter(df, df$Country=='India')
 corrplot(cor(df_india[c('Year','life','income','pop1')]),addCoef.col="grey", title="Correlation plot of all numeric attributes of the dataset for India")
 
-
 ```
 
 
-## DATA CONVERSIONS FOR CLUSTER AND REGRESSION ANALYSIS
-- converting "region" attribute to a numerical sequence so that it can be used in data analysis
+## DATA CONVERSIONS FOR CLUSTER AND REGRESSION ANALYSIS  
+- Converting "region" attribute to a numerical sequence so that it can be used in data analysis
+- Converting country names to a numeric country id column
 - Eliminating unwanted attributes such as population , region (text) and population1
 
 ```{r}
+# A function to assign a numeric value to region names
 regionConv <- function(x){
   if (x == "South Asia"){
     1
@@ -284,18 +329,28 @@ regionConv <- function(x){
   }
 }
 
+# sapply above function to have region id as a new column
 df$region_num <- sapply(df$region, regionConv)
 
+# Converting country names to a numeric country id column
 country_list <- unique(df$Country)
 df$country_id <- match(df$Country, country_list)
 
+# Choosing all converted columns to have an all numeric data frame
 df_clean <- df[c("country_id","Year","life","income","region_num","pop1")]
 
-df2 <- df[c("Year","life","income","pop1")]
 ```
-                                 
-### Elbow Method
-```{r}
+
+**Q9 : How many clusters are present in the data?**
+- ANS : Four clusters are found using Elbow method
+
+## CLUSTER ANALYSIS
+### SELECTION OF K (NUMBER OF CLUSTERS) USING ELBOW METHOD
+- A plot of total within cluster sum of squares against various values of k is created
+- Slope of this line becomes constant after k=4
+- Hence, as per the Elbow method, 4 initial clusters are chosen i.e. k = 4
+
+```{r warning=FALSE}
 # function to compute total within-cluster sum of square 
 wss <- function(k) {
   kmeans(df_clean, k, nstart = 10 )$tot.withinss
@@ -307,29 +362,175 @@ k.values <- 1:15
 # extract wss for 2-15 clusters
 wss_values <- map_dbl(k.values, wss)
 
+# Plot for elobow method
 plot(k.values, wss_values,
        type="b", pch = 19, frame = FALSE, 
        xlab="Number of clusters K",
        ylab="Total within-clusters sum of squares")
 ```
 
-### Cluster Visualization
+### CLUSTER VISUALIZATION
+- The cluster analysis successfully classifies the data into four clusters
+- Dim1 and Dim2 are chosen by the PCA process
+- Visualization uses for different colors to show four clusters
+
+** CLUSTER ANALYSIS OF ENTIRE DATASET WITH k=4 **
 ```{r}
 fit1 <- kmeans(df_clean, 4, nstart = 25)
 fviz_cluster(fit1, data = df_clean)
 ```
 
-```{r}
-fit2 <- kmeans(df2, 4, nstart = 25)
-fviz_cluster(fit2, data = df2)
-```
+### CLUSTER ANALYSIS : DATASET FOR 'India'
+- Based on the Elbow method, chose k = 3
+- Visualization shows 3 distinct groups of the data points
 
-```{r}
+** CLUSTER ANALYSIS OF 'ENTIRE'India' DATASET WITH k=3 **
 
+```{r warning=FALSE}
+# Creating dataset for India
 df_india <- filter(df_clean, df_clean$country_id==match('India',country_list))
 
+#Choosing only numeric attributes
 df_india <- df_india[c("Year"   ,    "life"    ,   "income"    , "pop1")]
 
-fit3 <- kmeans(df_india, 4, nstart = 25)
+# function to compute total within-cluster sum of square 
+wss1 <- function(k) {
+  kmeans(df_india, k, nstart = 10 )$tot.withinss
+}
+
+# Compute and plot wss for k = 1 to k = 15
+k.values <- 1:15
+
+# extract wss for 2-15 clusters
+wss_values1 <- map_dbl(k.values, wss1)
+
+# Plot for the Elbow method
+plot(k.values, wss_values1,
+       type="b", pch = 19, frame = FALSE, 
+       xlab="Number of clusters K",
+       ylab="Total within-clusters sum of squares")
+
+# Visualizing the clusters
+fit3 <- kmeans(df_india, 3, nstart = 25)
 fviz_cluster(fit3, data = df_india)
+
 ```
+
+### CONCLUSION OF CLUSTER ANALYSIS
+- With the help of ELbow test, four clusters can be formed in the entire dataset.
+- Whereas, a smalled dataset, such as data for India can be clustered in 3 clusters.
+- No major trend is observed in these clusteres.
+
+**Q10: Is there linear relationship of life expectancy with income, year, population ?**
+- ANS : Linear relationship is not present for life expectancy with income, year, population.
+
+## LINEAR REGRESSION ANALYSIS
+### FORMULA
+- **DEPENDENT VARIABLE : **
+    - "life"  The life expectancy
+- **INDEPENDENT VARIABLES : **
+    - "income": Income
+    - "Year"  : The year in which the observation was made
+    - "Year Squared" : A quadratic term as Year^2
+- **ACTUAL FORMULA :**
+    - Life expectancy = 1.302e-04 * df_clean$income + -6.185e+00 * df_clean$Year + 1.673e-03 * (df_clean$Year^2) + 5.746e+03
+  
+  
+### REGRESSION MODEL 1 
+- No quadratic term
+- R^2 = 0.6448
+- Coefficient of correlation = 0.1148577
+
+```{r}
+#Checking coefficient of correlation :
+print(cor(df_clean$life,df_clean$income +  df_clean$pop1 + df_clean$Year ))
+
+#Fitting the model
+fit_lm <- lm(df_clean$life ~ df_clean$income + df_clean$pop1 + df_clean$Year, data= df_clean)
+
+#Summary table
+summary(fit_lm)
+
+#plot(fit_lm$residuals)
+par(mfrow=c(2,2)) # Change the panel layout to 2 x 2
+plot(fit_lm)
+par(mfrow=c(1,1)) # Change back to 1 x 1
+
+#Breusch-Pagan Test
+## p-value indicates that linearity test is violated
+bptest(fit_lm)
+```
+- By looking at residuals vs fitted plot and Normal Q-Q plot of model 1, it is clear that the dataset does not follow a linear regression.
+- Breusch-Pagan Test indicates very low probability of linearity : p-value < 2.2e-16
+- Therefore a quadratic term is added in the formula.
+- Following are the results:
+
+### REGRESSION MODEL 2
+- Inclusion of quadratic term : Year^2 - it improved the R^2
+- R^2 = 0.7684 
+- Coefficient of correlation = 0.7984938
+- No particular pattern in the residual spread
+
+```{r}
+# Checkiing the coefficient of correlation
+cor(df_clean$life,df_clean$income + df_clean$Year + I(df_clean$Year^2) )
+
+# Creating the linear model
+fit_lm2 <- lm(df_clean$life ~ df_clean$income + df_clean$Year + I(df_clean$Year^2), data= df_clean)
+
+# Showing the linear regression summary table
+summary(fit_lm2)
+
+# Checking spread of the residuals
+# Result plot shows that the spread is random around the 0 horzontal line. It indicates that the linearity assumption is valid.
+plot(fit_lm2$residuals, col='grey', main="Spread of residuals" )
+abline(h = 0, col = "darkorange", lwd = 2)
+
+
+# Diagnostic plots of the lm
+par(mfrow=c(2,2)) # Change the panel layout to 2 x 2
+plot(fit_lm2)
+par(mfrow=c(1,1)) # Change back to 1 x 1
+
+
+#Breusch-Pagan Test
+## p-value indicates that linearity test is violated
+bptest(fit_lm2)
+```
+### DETAILS OF LINEAR REGRESSION SUMMARY TABLE 
+- **Following details for model 2**
+- **Formula **
+    - The summary table of model 2, first shows the formula used for fitting the model :
+      `lm(formula = df_clean$life ~ df_clean$income + df_clean$Year + 
+      I(df_clean$Year^2), data = df_clean)`
+- **Residuals:**
+    - Residuals section shows the minimum, maximum, fisrt quartile, third quartile and median value of the residual
+    - As per the median value of -0.097, it is clear that this model has near 0 residual
+- **Coefficients :**
+    - This shows the intercept and coefficients
+    - df_clean$income : .00013 
+    - df_clean$Year   : -6.185
+    - df_clean$Year^2 : 0.001673
+    - Intercept       : 5746
+- **p-Values**
+    - The table shows p-value is less than 2e-16 for these 3 independent variables.
+    - This means it is highly unlikely that these are insignificant variables.
+- **Adjusted R-squared**
+    - R^2 is 0.7684
+    - This high value of R^2 indicates that it is a good model
+  
+### ANALYSIS OF DIAGNOSTIC PLOTS
+#### Residuals Vs Fitted:  
+- Residuals are not centered at 0 for extreme data points. This violates the linearity test.  
+#### Normal Q-Q Plot:  
+- Residuals do not follow the line closely, indicating this is not a linear model.    
+#### Scale location plot:  
+- This provides details of variation of sqrt(residuals) vs the fitted values.    
+#### Residuals Vs Leverage plot:     
+- This plot shows ouliers, points which lie outside the cook's distance line.    
+
+## SUMMARY OF FINDINGS
+Life expectancy has increased significantly over time for all countries. As a result, the population has also increased drastically. 
+Middle eastern and European people have high income.
+The entire dataset can be divided in 4 clusters.
+There is no linear relation between the life expectancy and other attributes such as income, year of observation and population of the country.
